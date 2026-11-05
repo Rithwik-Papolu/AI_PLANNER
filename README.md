@@ -1,268 +1,421 @@
 # AI PLANNER – Intelligent Personal Planning and Decision-Making Agent
 
-An academic AI Mini-Capstone project demonstrating genuine Artificial Intelligence concepts, explainable multi-factor decision algorithms, constraint-satisfaction scheduling, adaptive drift rescheduling, natural language understanding, and multimodal voice interaction.
+An AI-powered personal planning application that helps users organize tasks, manage priorities, generate intelligent timetables, and interact through conversational AI and voice assistance.
+
+AI Planner is an academic AI Mini-Capstone project demonstrating explainable decision-making, constraint-based scheduling, natural language processing, adaptive rescheduling, and multimodal voice interaction.
 
 ---
 
-## 1. Project Overview & Problem Statement
+## 1. Project Overview
 
-Conventional task managers operate as passive, dumb digital to-do lists. They require users to manually order items, fail to account for cognitive work capacity, lack understanding of task dependencies, and offer zero causal explanation for what a user should tackle next.
+Traditional task management applications function as simple digital to-do lists. They require users to manually prioritize tasks, do not consider workload capacity, and provide limited assistance when schedules change.
 
-**AI Planner** transforms personal planning into an active, intelligent partner. Built with a luxurious **Dark Red and Warm Beige** visual identity, it combines:
-- **Transparent Mathematical Prioritization**: Eliminates opaque "black-box" LLM scoring in favor of an explainable weighted multi-factor decision model.
-- **Constraint-Based Daily Timetable Scheduling**: Uses greedy interval scheduling to guarantee non-overlapping work blocks, mandatory cognitive rest breaks, and lunch windows within customizable working hours.
-- **Adaptive Drift Rescheduling**: Dynamically detects schedule delays, urgent task arrivals, or missed milestones and reorganizes future blocks while strictly preserving finished milestones.
-- **Multimodal AI Interaction**: Unified central intelligence engine powering both an **AI Chatbot** and a hands-free **AI Voice Assistant** activated by the wake phrase **"Hey Planner"**.
-- **100% Zero-Cost Operation**: Runs entirely locally using free, open-source software (FastAPI, SQLite, React, Tailwind CSS, Ollama with Llama 3.2, and local STT/TTS).
+**AI Planner** transforms traditional task management into an intelligent planning assistant.
+
+### Key Features
+
+- **Intelligent Task Prioritization:** Uses an explainable weighted mathematical model to calculate task priority.
+- **AI Daily Timetable Generator:** Automatically generates structured daily schedules based on deadlines, task durations, and available working hours.
+- **Adaptive Rescheduling:** Adjusts future tasks when delays occur while preserving completed activities.
+- **AI Chatbot:** Allows users to interact with the planning engine using natural language.
+- **AI Voice Assistant:** Supports hands-free interaction using the wake phrase "Hey Planner".
+- **Natural Language Task Intake:** Converts user requests into structured tasks by identifying titles, deadlines, durations, and categories.
+- **Task Management:** Supports creating, updating, completing, and organizing tasks.
+- **Analytics and History:** Provides insights into planning activities and task progress.
+- **Local Database:** Uses SQLite for persistent storage.
+- **Premium Interface:** Features a Dark Red and Warm Beige design with glossy classic icons.
 
 ---
 
 ## 2. System Architecture
 
-Both the conversational chatbot and the voice assistant interface with a unified, centralized planning engine:
+AI Planner follows a modular architecture consisting of a React frontend, FastAPI backend, centralized AI planning engine, voice processing components, and SQLite database.
 
-```
-                      +---------------------------------------+
-                      |       USER INTERACTION LAYER          |
-                      |  Text Input  |  Voice: "Hey Planner"  |
-                      +---------------------------------------+
-                                          |
-                      +---------------------------------------+
-                      |         SPEECH PIPELINE (VOICE)       |
-                      |  Wake Word Detection -> STT Engine    |
-                      +---------------------------------------+
-                                          |
-                      +---------------------------------------+
-                      |      NATURAL LANGUAGE UNDERSTANDING   |
-                      |   Intent Recognition & Entity Parser  |
-                      +---------------------------------------+
-                                          |
-                      +---------------------------------------+
-                      |      CENTRAL AI PLANNING ENGINE       |
-                      |   Multi-Factor Priority Engine        |
-                      |   Greedy Interval Scheduler           |
-                      |   Adaptive Rescheduler                |
-                      |   Ollama Llama 3.2 + Local Fallback   |
-                      +---------------------------------------+
-                                          |
-                      +---------------------------------------+
-                      |      PERSISTENT STORAGE (SQLITE)      |
-                      |  Tasks, Timetables, Preferences,      |
-                      |  History, Reminders, Conversations    |
-                      +---------------------------------------+
-                                          |
-                      +---------------------------------------+
-                      |        RESPONSE & SPEECH OUTPUT       |
-                      |  Structured JSON / Speech Synthesis   |
-                      +---------------------------------------+
+### Architecture Flow
+
+```text
+             USER INTERACTION LAYER
+          Text Input | Voice Assistant
+                      |
+                      v
+              SPEECH PIPELINE
+          Wake Word Detection / STT
+                      |
+                      v
+          NATURAL LANGUAGE PROCESSING
+           Intent Recognition & Parsing
+                      |
+                      v
+             CENTRAL AI ENGINE
+           Priority Decision Engine
+           Timetable Scheduler
+           Adaptive Rescheduler
+           Ollama Llama 3.2
+                      |
+                      v
+              DATABASE LAYER
+             SQLite Persistence
+          Tasks / Timetables / History
+                      |
+                      v
+             RESPONSE GENERATION
+            Structured JSON / TTS
 ```
 
 ---
 
-## 3. Core AI Concepts & Algorithms
+## 3. Core AI Concepts and Algorithms
 
 ### 3.1 Explainable Multi-Factor Priority Algorithm
 
-Unlike naive apps that rely on LLM hallucinations for prioritization, AI Planner implements an explainable, normalized mathematical scoring formula:
+AI Planner uses a mathematical scoring model to determine the priority of tasks.
 
-$$\text{Priority Score} = (\text{Importance} \times 0.35) + (\text{Urgency} \times 0.30) + (\text{Deadline Proximity} \times 0.20) + (\text{Time Pressure} \times 0.15)$$
+**Priority Score Formula:**
 
-#### Metric Definitions:
-1. **Importance ($I \in [0, 100]$)**:
-   - High: 100.0 | Medium: 60.0 | Low: 25.0
-2. **Urgency ($U \in [0, 100]$)**:
-   - Derived from remaining hours until due date:
-     - Overdue: 100.0 (with penalty scaling)
-     - $\le 6\text{h}$: 95.0
-     - $\le 24\text{h}$: 85.0
-     - $\le 48\text{h}$: 70.0
-     - $\le 7\text{d}$: 45.0
-     - $> 7\text{d}$: 20.0
-     - No deadline: 30.0 baseline
-3. **Deadline Proximity ($D \in [0, 100]$)**:
-   - Exponential decay modeling urgency acceleration as deadlines near:
-     $$D = 100 \times \exp\left(-\frac{\max(0, \Delta t_{\text{hours}})}{72}\right)$$
-4. **Time Pressure ($P \in [0, 100]$)**:
-   - Evaluates the ratio between required work duration and remaining available buffer:
-     $$P = \min\left(100, \frac{\text{Estimated Duration (hours)}}{\max(0.1, \Delta t_{\text{hours}})} \times 100\right)$$
+Priority Score = (Importance × 0.35) + (Urgency × 0.30) + (Deadline Proximity × 0.20) + (Time Pressure × 0.15)
 
-#### Dependency Awareness & Explainability:
-- If Task $B$ depends on Task $A$, Task $B$ cannot be scheduled or recommended until $A$ is completed.
-- For every task, the engine provides an exact human-readable causal rationale explaining the weighted factors.
+**Metric Definitions:**
 
----
+1. **Importance:** Represents the significance of a task.
+   - High: 100
+   - Medium: 60
+   - Low: 25
 
-### 3.2 Constraint-Satisfaction Daily Timetable Scheduler
+2. **Urgency:** Calculated based on the remaining time until the deadline.
+   - Overdue: 100
+   - Within 6 hours: 95
+   - Within 24 hours: 85
+   - Within 48 hours: 70
+   - Within 7 days: 45
+   - More than 7 days: 20
+   - No deadline: 30
 
-The timetable generator implements a **Greedy Interval Scheduling** algorithm subject to domain constraints:
-1. **Capacity Bounds**: Respects user working hours (e.g., 09:00 to 18:00).
-2. **Mandatory Rest**: Automatically schedules 15-minute breaks after 90 minutes of continuous focus work.
-3. **Nutrition Window**: Protects user lunch periods (e.g., 13:00 to 14:00).
-4. **Non-Overlapping Blocks**: Guarantees zero time-slot collisions.
-5. **Burnout Prevention**: Excess tasks that cannot fit inside the working day are deferred and reported transparently.
+3. **Deadline Proximity:** Uses an exponential decay function to increase priority as deadlines approach.
 
----
+   D = 100 × exp(-max(0, Δt) / 72)
+
+4. **Time Pressure:** Evaluates the relationship between estimated task duration and available time.
+
+   P = min(100, (Estimated Duration / max(0.1, Remaining Hours)) × 100)
+
+**Dependency Awareness:**
+
+- Tasks depending on unfinished tasks are prevented from being scheduled or recommended prematurely.
+- The system provides human-readable explanations for priority decisions.
+
+### 3.2 Constraint-Based Daily Timetable Scheduler
+
+The timetable generator uses a Greedy Interval Scheduling approach.
+
+Its main constraints include:
+
+1. Working-hour limits.
+2. Mandatory 15-minute breaks after 90 minutes of continuous focus.
+3. Protected lunch periods.
+4. Non-overlapping task allocations.
+5. Automatic deferral of tasks that cannot fit within available working hours.
 
 ### 3.3 Adaptive Drift Rescheduling
 
-When life intervenes (a task runs late, an urgent assignment arrives, or a deadline changes), the adaptive rescheduler:
-1. Locks completed blocks in place (immutability of history).
-2. Computes the causal drift and minimal displacement vector for remaining blocks.
-3. Shifts incomplete tasks smoothly into remaining available windows.
-4. Outputs an explicit change diff explaining each shift.
+The adaptive rescheduling engine reorganizes incomplete tasks when unexpected changes occur.
+
+Its operations include:
+
+1. Preserving completed schedule blocks.
+2. Detecting schedule delays and task changes.
+3. Shifting incomplete tasks into available time slots.
+4. Providing explanations of schedule modifications.
+
+### 3.4 Natural Language Processing and Task Intake
+
+Users can enter requests such as:
+
+"Tomorrow I need to complete my AI assignment, study database concepts for two hours and prepare my presentation by 6 PM."
+
+The NLP engine:
+
+- Identifies individual tasks from compound requests.
+- Extracts task titles, deadlines, durations, and categories.
+- Detects missing information.
+- Generates clarification prompts.
+- Displays a preview before saving tasks.
 
 ---
 
-### 3.4 Natural Language Entity Extraction & Intake
+## 4. Empirical Evaluation and Benchmarking
 
-Users can input unstructured requests such as:
-> *"Tomorrow I need to complete my AI assignment, study database concepts for two hours and prepare my presentation by 6 PM."*
+The project evaluates its weighted prioritization approach against FIFO and Earliest Deadline First (EDF) strategies under a bounded capacity of 300 minutes.
 
-The natural language intake:
-- Decomposes compound requests into individual tasks.
-- Extracts titles, deadlines, durations, and categories.
-- Detects missing information and formulates specific clarification prompts.
-- Displays an interactive **Preview Modal** before saving, guaranteeing user confirmation.
+| Evaluation Metric | FIFO | EDF | AI Planner |
+|---|---|---|---|
+| High-Importance Task Completion | 50% | 50% | 100% |
+| Urgent Crisis Prevention | Poor | Medium | Optimal |
+| Scheduling Conflicts | Present | Present | Zero |
+| Dependency Violations | Common | Frequent | Zero |
 
----
-
-## 4. Empirical Evaluation & Benchmarking
-
-In testing against common baseline approaches under bounded capacity (300 minutes available focus time), AI Planner demonstrated superior decision-making:
-
-| Metric | FIFO Strategy | Earliest Deadline First (EDF) | AI Planner (Weighted Model) |
-| :--- | :---: | :---: | :---: |
-| **High-Importance Task Completion** | 50% (1/2) | 50% (1/2) | **100% (2/2)** |
-| **Urgent Crisis Prevention** | Poor (vulnerable to queue order) | Medium (trapped by trivial short deadlines) | **Optimal (balanced urgency + value)** |
-| **Scheduling Conflicts** | Present | Present | **0 (Zero Conflicts)** |
-| **Dependency Violations** | Common | Frequent | **0 (Topologically Sorted)** |
+The evaluation demonstrates the potential advantages of combining task importance, urgency, deadline proximity, and time pressure in a unified decision-making model.
 
 ---
 
-## 5. Technology Stack & Zero-Cost Architecture
+## 5. Technology Stack
 
-- **Frontend**:
-  - React 19 + Vite 6
-  - Tailwind CSS 3 (Dark Red & Warm Beige Theme)
-  - React Router 7
-  - Lucide React (Glossy Classic Icons)
-  - Recharts (Interactive Analytics)
-- **Backend**:
-  - Python 3 + FastAPI
-  - SQLAlchemy 2.0 ORM
-  - Pydantic v2 validation
-  - Uvicorn ASGI server
-- **Database**:
-  - SQLite (`data/ai_planner.db`) with persistent relational schemas
-- **AI Engine**:
-  - Ollama integration with `llama3.2` local model
-  - Robust deterministic local rule/NLP fallback engine for 100% uptime
-- **Voice Technology**:
-  - Web Speech Recognition API with wake-word detector ("Hey Planner")
-  - Web Speech Synthesis API + backend speech payload formatting
+### Frontend
+- React 19
+- Vite 6
+- Tailwind CSS 3
+- React Router 7
+- Lucide React
+- Recharts
+
+### Backend
+- Python
+- FastAPI
+- SQLAlchemy 2.0
+- Pydantic v2
+- Uvicorn
+
+### Database
+- SQLite
+- Persistent relational storage
+
+### AI Engine
+- Ollama
+- Llama 3.2
+- Local rule-based NLP and fallback processing
+
+### Voice Technology
+- Web Speech Recognition API
+- Web Speech Synthesis API
+- Wake phrase detection: "Hey Planner"
 
 ---
 
 ## 6. Premium UI/UX Design System
 
-The application features a bespoke **Dark Red and Warm Beige** aesthetic:
+The application follows a Dark Red and Warm Beige visual theme.
 
-| Visual Element | Hex Code | Purpose |
-| :--- | :--- | :--- |
-| **Primary Background** | `#F2E8D8` | Warm Beige page canvas |
-| **Secondary Background** | `#FAF5EC` | Light Cream soft contrast |
-| **Card Surfaces** | `#FFF9F0` | Soft Ivory polished cards |
-| **Primary Accent** | `#701C2C` | Deep Wine Red buttons & headers |
-| **Secondary Accent** | `#8B2635` | Burgundy badges & active pills |
-| **Dark Surfaces** | `#3D111B` | Deep Maroon sidebar & dialog bars |
-| **Primary Text** | `#302626` | Dark Charcoal for high readability |
-| **Secondary Text** | `#806D65` | Muted Brown for metadata |
-| **Highlight Accent** | `#C5A059` | Subtle Antique Gold glows & stars |
+| Visual Element | Hex Code |
+|---|---|
+| Primary Background | `#F2E8D8` |
+| Secondary Background | `#FAF5EC` |
+| Card Surfaces | `#FFF9F0` |
+| Primary Accent | `#701C2C` |
+| Secondary Accent | `#8B2635` |
+| Dark Surfaces | `#3D111B` |
+| Primary Text | `#302626` |
+| Secondary Text | `#806D65` |
+| Highlight Accent | `#C5A059` |
+
+The interface uses polished cards, glossy classic icons, elegant typography, and a consistent layout to provide a modern planning experience.
 
 ---
 
-## 7. Setup & Installation Guide
+## 7. Installation and Setup Guide
 
 ### Prerequisites
-- Python 3.10+ (tested on Python 3.15)
-- Node.js 18+ & npm 10+
-- Optional: [Ollama](https://ollama.ai) installed locally with `llama3.2` (`ollama run llama3.2`)
 
----
+Install the following software:
 
-### Step 1: Clone & Configure Backend
+- Python 3.10 or newer
+- Node.js 18 or newer
+- npm
+- Git
+- Optional: Ollama with the Llama 3.2 model
+
+### Step 1: Clone the Repository
+
+```bash
+git clone https://github.com/Rithwik-Papolu/AI_PLANNER.git
+```
+
+Navigate into the project directory:
+
+```bash
+cd AI_PLANNER
+```
+
+### Step 2: Configure the Backend
+
+Create a Python virtual environment:
+
+```bash
+python -m venv .venv
+```
+
+Activate it on Windows:
 
 ```powershell
-# Navigate into repository
-cd C:\Users\Rithwik Papolu\Documents\AI-Planner
+.venv\Scripts\Activate.ps1
+```
 
-# Activate virtual environment
-.\.venv\Scripts\Activate.ps1
+Install the required dependencies:
 
-# Install backend dependencies (if not already installed)
+```bash
 pip install -r requirements.txt
+```
 
-# Seed initial academic capstone data into SQLite
+Initialize the database and seed initial data:
+
+```bash
 python -m backend.seed_data
 ```
 
----
+### Step 3: Configure the AI Model
 
-### Step 2: Configure & Start Frontend
+Install Ollama and download the Llama 3.2 model:
 
-```powershell
-# In a separate terminal, navigate to frontend directory
+```bash
+ollama pull llama3.2
+```
+
+Run the model:
+
+```bash
+ollama run llama3.2
+```
+
+Ollama must be running locally for local LLM-powered functionality.
+
+### Step 4: Configure the Frontend
+
+Open another terminal:
+
+```bash
 cd frontend
+```
 
-# Install npm dependencies (if not already installed)
+Install frontend dependencies:
+
+```bash
 npm install
+```
 
-# Start Vite React development server
+Start the frontend development server:
+
+```bash
 npm run dev
 ```
 
-The frontend will be accessible at: **`http://localhost:3000`**
+Frontend URL:
 
----
+`http://localhost:3000`
 
-### Step 3: Run FastAPI Backend Gateway
+### Step 5: Start the Backend
 
-```powershell
-# From the project root with .venv activated:
+From the project root, activate the virtual environment and execute:
+
+```bash
 uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-- API Base URL: **`http://127.0.0.1:8000`**
-- Interactive Swagger UI Documentation: **`http://127.0.0.1:8000/docs`**
+Backend API URL:
+
+`http://127.0.0.1:8000`
+
+Interactive API documentation:
+
+`http://127.0.0.1:8000/docs`
 
 ---
 
 ## 8. Running Automated Tests
 
-Run the comprehensive Pytest verification suite:
+AI Planner includes automated tests for its core functionalities.
 
-```powershell
-.\.venv\Scripts\python -m pytest tests/ -v
+Run the test suite using:
+
+```bash
+python -m pytest tests/ -v
 ```
 
-All 18 tests will execute and pass:
-- `test_priority_engine.py`: Verifies normalization, urgency brackets, decay curve, time pressure, and dependency holds.
-- `test_scheduler.py`: Verifies greedy non-overlapping allocations, lunch insertions, and adaptive rescheduling.
-- `test_nlp_and_agent.py`: Verifies wake-word detection, relative time parsing, duration extraction, and compound request decomposition.
-- `test_api_endpoints.py`: Verifies end-to-end FastAPI CRUD, status transitions, chat, voice, and analytics.
-- `test_algorithm_evaluation.py`: Runs the empirical benchmark comparing the Weighted Algorithm against FIFO and EDF.
+The test modules cover:
+
+- `test_priority_engine.py` – Priority calculations and dependency handling.
+- `test_scheduler.py` – Timetable generation and adaptive rescheduling.
+- `test_nlp_and_agent.py` – Natural language parsing and AI agent functionality.
+- `test_api_endpoints.py` – Backend API operations.
+- `test_algorithm_evaluation.py` – Comparative algorithm evaluation.
+- `test_voice_assistant.py` – Voice assistant functionality.
+
+The original project verification reported 18 tests.
 
 ---
 
-## 9. Academic Mini-Capstone Verification Checklist
+## 9. Project Structure
 
-- [x] Demonstrates genuine AI concepts beyond simple prompt wrappers.
-- [x] Transparent, explainable mathematical priority scoring with complete factor breakdown.
-- [x] Conflict-free constraint-based daily interval scheduling.
-- [x] Real-time adaptive schedule repair for task overruns and delays.
-- [x] Multimodal voice assistant with real "Hey Planner" wake-phrase activation.
-- [x] Natural language compound task intake with preview and missing-info clarification.
-- [x] Persistent SQLite database with 7 relational models and foreign key enforcement.
-- [x] Zero-cost open-source operation with local model integration and offline heuristics.
-- [x] Premium Dark Red & Warm Beige UI with glossy classic icons.
-- [x] Full Pytest automated test coverage and comparative empirical benchmark.
+```text
+AI_PLANNER/
+│
+├── backend/
+│   ├── ai_engine/
+│   ├── planning/
+│   ├── routes/
+│   ├── voice/
+│   ├── main.py
+│   ├── database.py
+│   ├── models.py
+│   └── schemas.py
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── api/
+│   │   ├── App.jsx
+│   │   └── index.css
+│   ├── package.json
+│   └── vite.config.js
+│
+├── data/
+├── tests/
+├── .env.example
+├── .gitignore
+├── README.md
+├── requirements.txt
+├── run.bat
+└── run_app.bat
+```
+
+---
+
+## 10. Academic Mini-Capstone Verification Checklist
+
+- [x] Demonstrates AI concepts beyond basic prompt-based interactions.
+- [x] Implements explainable mathematical task prioritization.
+- [x] Provides constraint-based daily timetable scheduling.
+- [x] Supports adaptive schedule rescheduling.
+- [x] Includes an AI chatbot.
+- [x] Includes a voice assistant with "Hey Planner" wake phrase support.
+- [x] Supports natural language task intake.
+- [x] Uses persistent SQLite storage.
+- [x] Integrates a locally running LLM through Ollama.
+- [x] Features a Dark Red and Warm Beige user interface.
+- [x] Includes automated tests and comparative algorithm evaluation.
+
+---
+
+## 11. Future Enhancements
+
+Potential improvements include:
+
+- Cloud synchronization across multiple devices.
+- Mobile application support.
+- Advanced voice interaction and multilingual support.
+- Improved predictive task recommendations.
+- Calendar integration.
+- Personalized productivity analytics.
+- More advanced AI-driven scheduling strategies.
+
+---
+
+## 12. Conclusion
+
+AI Planner demonstrates how Artificial Intelligence, mathematical decision-making, natural language processing, and intelligent scheduling can be combined to create a practical personal planning assistant.
+
+By integrating explainable task prioritization, automated timetable generation, adaptive rescheduling, conversational AI, and voice interaction, the project aims to make everyday task management more efficient, organized, and intelligent.
+
+**AI PLANNER – Plan Smarter. Work Better. Achieve More.**
+
+---
+
+**GitHub Repository:** https://github.com/Rithwik-Papolu/AI_PLANNER
