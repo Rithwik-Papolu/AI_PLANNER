@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #F2E8D8;
+    color: #302626;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  h1, h2, h3, .font-serif {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+}
+
+/* Custom luxury scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #EFE3D0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #8B2635;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #701C2C;
+}
+
+/* Glossy Icon Finish */
+.glossy-icon-container {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.1) 100%),
+              radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6),
+              0 3px 8px rgba(61, 17, 27, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glossy-icon-container:hover {
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8),
+              0 6px 14px rgba(61, 17, 27, 0.25);
+}
+
+/* Glossy Gold Accent */
+.glossy-gold-container {
+  background: linear-gradient(135deg, rgba(245, 219, 163, 0.5) 0%, rgba(197, 160, 89, 0.2) 100%);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7),
+              0 3px 10px rgba(197, 160, 89, 0.3);
+  border: 1px solid rgba(197, 160, 89, 0.4);
+}
+
+/* Luxury card with soft depth */
+.card-luxury {
+  background-color: #FFF9F0;
+  border: 1px solid rgba(222, 203, 181, 0.7);
+  box-shadow: 0 4px 20px rgba(61, 17, 27, 0.04), 0 1px 3px rgba(61, 17, 27, 0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card-luxury:hover {
+  border-color: rgba(139, 38, 53, 0.3);
+  box-shadow: 0 8px 26px rgba(61, 17, 27, 0.08);
+}
+
+/* Burgundy Button */
+.btn-burgundy {
+  background: linear-gradient(135deg, #8B2635 0%, #701C2C 100%);
+  color: #FFF9F0;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 3px 10px rgba(112, 28, 44, 0.3);
+  transition: all 0.2s ease;
+}
+
+.btn-burgundy:hover {
+  background: linear-gradient(135deg, #9C2E3F 0%, #7A1F30 100%);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 5px 14px rgba(112, 28, 44, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-burgundy:active {
+  transform: translateY(0);
+}

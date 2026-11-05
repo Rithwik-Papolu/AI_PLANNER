@@ -1,0 +1,24 @@
+# Python & Virtual Environments
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.pytest_cache/
+.coverage
+htmlcov/
+
+# Node & Frontend
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+.DS_Store
+
+# Logs & Database
+*.log
+data/ai_planner.db-journal
+
+# Environment variables
+.env
+.env.local
